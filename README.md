@@ -1,4 +1,4 @@
-# AZGPT - A ChatGPT clone
+# AZGPT - A Laravel based ChatGPT app only translate from english to Azerbaijan language
 
 This is a simple clone of ChatGPT made with Laravel using the OpenAI PHP client.
 
