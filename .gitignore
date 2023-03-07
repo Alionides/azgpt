@@ -3,6 +3,8 @@
 /public/build
 /public/hot
 /public/storage
+/public/questions.txt
+/public/counter.txt
 /storage/*.key
 /vendor
 .env

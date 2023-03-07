@@ -6,55 +6,60 @@ use OpenAI\Laravel\Facades\OpenAI;
 use GuzzleHttp\Client;
 use Stichoza\GoogleTranslate\GoogleTranslate;
 
+use Illuminate\Support\Facades\RateLimiter;
 
-Route::get('/', function () {
-    $ip = $_SERVER['REMOTE_ADDR'];
-    getUniqueVisitorCount($ip);
-    $q_count = getUniqueQuestionCount('');
-    $messages = collect(session('messages', []))->reject(fn ($message) => $message['role'] === 'system');
-    return view('welcome', [
-        'messages' => $messages,
-        'visitors'=> $_SESSION['visitor_count'],
-        'questions'=> $q_count
-    ]);
+Route::middleware(['throttle:global'])->group(function () {
+
+    Route::get('/', function (Request $request) {
+
+        $ip = $_SERVER['REMOTE_ADDR'];
+        getUniqueVisitorCount($ip);
+        $q_count = getUniqueQuestionCount('');
+        $messages = collect(session('messages', []))->reject(fn($message) => $message['role'] === 'system');
+        return view('welcome', [
+            'messages' => $messages,
+            'visitors' => $_SESSION['visitor_count'],
+            'questions' => $q_count
+        ]);
+    });
+
+    Route::post('/', function (Request $request) {
+        $messages = $request->session()->get('messages', [
+            ['role' => 'system', 'content' => 'You are AZGPT - A ChatGPT clone. Answer as concisely as possible.']
+        ]);
+
+        $az_text = $request->input('message');
+        $tr = new GoogleTranslate();
+        $tr->setSource('az');
+        $tr->setTarget('en');
+        $en_text = $tr->translate($az_text);
+
+        $messages[] = ['role' => 'user', 'content' => $en_text];
+        $new_messages[] = ['role' => 'user', 'content' => $az_text];
+
+        $response = OpenAI::chat()->create([
+            'model' => 'gpt-3.5-turbo',
+            'messages' => $messages
+        ]);
+
+        $fin = new GoogleTranslate();
+        $fin->setSource('en');
+        $fin->setTarget('az');
+        $translated = $fin->translate($response->choices[0]->message->content);
+
+        $new_messages[] = ['role' => 'assistant', 'content' => $translated];
+
+        $request->session()->put('messages', $new_messages);
+        getUniqueQuestionCount($az_text);
+        return redirect('/');
+    });
+
+    Route::get('/reset', function (Request $request) {
+        $request->session()->forget('messages');
+        return redirect('/');
+    });
+
 });
-
-Route::post('/', function (Request $request) {
-    $messages = $request->session()->get('messages', [
-        ['role' => 'system', 'content' => 'You are AZGPT - A ChatGPT clone. Answer as concisely as possible.']
-    ]);
-
-    $az_text = $request->input('message');
-    $tr = new GoogleTranslate();
-    $tr->setSource('az');
-    $tr->setTarget('en');
-    $en_text = $tr->translate($az_text);
-
-    $messages[] = ['role' => 'user', 'content' => $en_text];
-    $new_messages[] = ['role' => 'user', 'content' => $az_text];
-
-    $response = OpenAI::chat()->create([
-        'model' => 'gpt-3.5-turbo',
-        'messages' => $messages
-    ]);
-
-    $fin = new GoogleTranslate();
-    $fin->setSource('en');
-    $fin->setTarget('az');
-    $translated = $fin->translate($response->choices[0]->message->content);
-
-    $new_messages[] = ['role' => 'assistant', 'content' => $translated];
-
-    $request->session()->put('messages', $new_messages);
-    getUniqueQuestionCount($az_text);
-    return redirect('/');
-});
-
-Route::get('/reset', function (Request $request) {
-    $request->session()->forget('messages');
-    return redirect('/');
-});
-
 
 
 function getUniqueVisitorCount($ip)
