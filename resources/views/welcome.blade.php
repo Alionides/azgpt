@@ -20,15 +20,14 @@
     <div class="grid grid-cols-1 p-4 gap-4 place-items-center">
         <div style="border-color:#ececf1" class="border-solid border-4 rounded ">
             <p style="color:#ececf1" class="font-sans font-bold text-3xl p-5">AzGPT</p>
-
-        </div><p>developed by <a href="https://github.com/Alionides" target="_blank">ALI SHIKHIYEV</a> </p>
+        </div>
+        <p>developed by <a href="https://github.com/Alionides" target="_blank">ALI SHIKHIYEV</a> </p>
+        <a href="https://www.buymeacoffee.com/alishikhiyev" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" style="height: 60px !important;width: 217px !important;" ></a>
     </div>
 
     <div class="block sm:flex md:block lg:flex items-center justify-center">
         <div class="mt-8 sm:m-8 md:m-0 md:mt-8 lg:m-8 text-center">
             <div class="inline-flex items-center">
-{{--                <span class="text-3xl font-medium">1.4%</span>--}}
-{{--                <span class="text-xl text-gray-600 ml-2">+</span>--}}
                 <span class="text-xl ml-2 text-white">{{$visitors}}</span>
             </div>
             <span class="block text-sm text-white mt-2">İstifadəçi sayı</span>
