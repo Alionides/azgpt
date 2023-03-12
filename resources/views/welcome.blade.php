@@ -67,6 +67,7 @@
             @csrf
             <label for="message" style="color:#ececf1">Sual ver:</label>
             <input style="color:white;  background-color:#40414f;     border: 0px solid;    outline: none;" id="message" type="text" name="message" autocomplete="off" class="border rounded-md  p-2 flex-1" />
+            <button class="bg-gray-800 text-white p-2 rounded-md">İrəli</button>
             <a class="bg-gray-800 text-white p-2 rounded-md" href="/reset">Təmizlə</a>
         </form>
     </body>
