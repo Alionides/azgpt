@@ -4,6 +4,7 @@
 /public/hot
 /public/storage
 /public/questions.txt
+/public/images.txt
 /public/counter.txt
 /storage/*.key
 /vendor

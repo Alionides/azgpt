@@ -15,15 +15,46 @@ Route::middleware(['throttle:global'])->group(function () {
         $ip = $_SERVER['REMOTE_ADDR'];
         getUniqueVisitorCount($ip);
         $q_count = getUniqueQuestionCount('');
+        $i_count = getUniqueImageCount('');
         $messages = collect(session('messages', []))->reject(fn($message) => $message['role'] === 'system');
         return view('welcome', [
             'messages' => $messages,
             'visitors' => $_SESSION['visitor_count'],
-            'questions' => $q_count
+            'questions' => $q_count,
+            'images' => $i_count,
         ]);
     });
 
+    Route::post('/image', function (Request $request) {
+        $request->session()->forget('messages');
+        $az_text = $request->input('message');
+        $tr = new GoogleTranslate();
+        $tr->setSource('az');
+        $tr->setTarget('en');
+        $en_text = $tr->translate($az_text);
+        $new_messages[] = ['role' => 'user', 'content' => $az_text];
+
+        $response = OpenAI::images()->create([
+            'prompt' => $en_text,
+            'n' => 1,
+            'size' => '512x512',
+            'response_format' => 'url',
+        ]);
+
+        $image = [];
+        foreach ($response->data as $data) {
+           $image['image'] = $data->url;
+            $data->b64_json;
+        }
+        $new_messages[] = ['role' => 'assistant', 'content' => $image];
+        //return $new_messages;
+        $request->session()->put('messages', $new_messages);
+        getUniqueImageCount($az_text);
+        return redirect('/');
+
+    });
     Route::post('/', function (Request $request) {
+        $request->session()->forget('messages');
         $messages = $request->session()->get('messages', [
             ['role' => 'system', 'content' => 'You are AZGPT - A ChatGPT clone. Answer as concisely as possible.']
         ]);
@@ -58,7 +89,6 @@ Route::middleware(['throttle:global'])->group(function () {
         $request->session()->forget('messages');
         return redirect('/');
     });
-
 });
 
 
@@ -105,4 +135,24 @@ function getUniqueQuestionCount($question) : int
             $question_count = count($questionList);
         }
         return $question_count;
+}
+function getUniqueImageCount($image) : int
+{
+        $file = 'images.txt';
+        if(!$data = @file_get_contents($file))
+        {
+            file_put_contents($file, base64_encode($image));
+            $image_count = 1;
+        }
+        else{
+            $decodedData = base64_decode($data);
+            $imageList = explode(';', $decodedData);
+
+            if(!in_array($image, $imageList)){
+                array_push($imageList, $image);
+                file_put_contents($file, base64_encode(implode(';', $imageList)));
+            }
+            $image_count = count($imageList);
+        }
+        return $image_count;
 }
